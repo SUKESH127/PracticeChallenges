@@ -507,4 +507,239 @@ def multiprocessorSystem(ability, num, processes):
         time += 1
     return time
 
-# Labeling/Tagging System
+# Labeling/Tagging System ???
+def labelingSystem(originalTag, limit):
+    def getString(intChar, count):
+        repeat = [chr(intChar + 97)]*count
+        return "" .join(repeat)
+
+    count = [0] * 26
+    for c in originalTag:
+        position = ord(c) - 97
+        count[position] += 1
+    # print(count)
+
+    
+    pq = PriorityQueue()
+    for i in range(26):
+        if count[i] > 0:
+            pq.put((-i, [count[i]]))
+    if pq.empty():
+        return "" 
+    
+    sb = ""
+    pre = pq.get()
+    while not pq.empty():
+        cur = pq.get()
+        print(f"char: {chr((-cur[0]) + 97)} cur[char]: {-cur[0]} cur[count]: {cur[1][0]}")
+        if pre[1][0] > limit:
+            pre[1][0] -= limit
+            pq.put((-pre[0], pre[1]))
+            sb += getString(-pre[0], limit)
+        else:
+            sb += getString(-pre[0], pre[1][0])
+        pre = cur
+
+    sb += getString(-pre[0], min(limit, pre[1][0]))
+    return sb
+
+    # for c in originalTag:
+    #     castedIntRepresentation = - ord(c)
+    #     pq.put((castedIntRepresentation,c)) # O(logn) time complexity
+    
+    # maxString = ""
+    # while not pq.empty():
+    #     c = (pq.get())[1]
+    #     maxString += c
+    
+    # print(f"maxstring: {maxString}")
+
+    # prev = maxString[0]
+    # consecutiveCharCount = 1
+    # output = maxString[0]
+    # for i in range(1,len(maxString)):
+    #     c = maxString[i]
+    #     if prev == c:
+    #         consecutiveCharCount += 1
+    #     else:
+    #         consecutiveCharCount = 1
+        
+    #     if prev == c and consecutiveCharCount > limit:
+    #         diff = consecutiveCharCount - limit
+    #         maxString = maxString[:(i+1) - diff] + maxString[i+1] + maxString[diff]
+
+    #         if i + 1 < len(maxString) - 1:
+    #             s = list(maxString)
+    #             s[i], s[i + 1] = s[i + 1], s[i]
+    #             maxString = ''.join(s)
+    #             consecutiveCharCount -= 1
+    #     else:
+    #         output += c
+    #     prev = c
+
+    # return "maxString"    
+
+# print(labelingSystem("cbddd", 2))
+
+def lruCacheMisses(num: int, pages : List[int], maxCacheSize : int) -> int:
+    # WRITE YOUR BRILLIANT CODE HERE
+    class LRUCache:
+        class DLL:
+            def __init__(self, key, val):
+                self.key = key
+                self.val = val
+                self.next = None
+                self.prev = None
+        def __init__(self, capacity: int):
+            self.m = {}
+            self.head = self.DLL(0,0)
+            self.tail = self.DLL(0,0)
+            self.head.next = self.tail
+            self.tail.prev = self.head
+            self.size = 0
+            self.capacity = capacity
+        def get(self, key: int) -> int:
+            if key in self.m:
+                loc = self.m[key]
+                loc.prev.next = loc.next
+                loc.next.prev = loc.prev
+                self.head.next.prev = loc
+                loc.next = self.head.next
+                self.head.next = loc
+                loc.prev = self.head
+                return loc.val
+            else:
+                return -1
+        def put(self, key: int, value: int) -> None:
+            if key in self.m:
+                self.get(key)
+                self.m[key].val = value
+                return
+            self.size += 1
+            if self.size > self.capacity:
+                lru = self.tail.prev
+                del self.m[lru.key]
+                self.tail.prev.val = self.tail.val
+                self.tail.prev.next = None
+                self.tail = self.tail.prev
+                self.size -= 1
+            new_head = self.DLL(key, value)
+            self.head.next.prev = new_head
+            new_head.next = self.head.next
+            self.head.next = new_head
+            new_head.prev = self.head
+            self.m[key] = new_head
+    cache = LRUCache(maxCacheSize)
+    misses = 0
+    for page in pages:
+        if cache.get(page) == -1:
+            misses += 1
+        cache.put(page, None)
+    return misses
+
+def findSmallestDivisor(s, t):
+    if (len(s) % len(t)) != 0:
+        return -1
+    l2 = len(t)
+    for i in range(len(s)):
+        if s[i] != t[i%l2]:
+            return -1
+    for i in range(len(t)):
+        j = 0
+        while j < len(t):
+            if t[j] != t[j%(i+1)]:
+                break
+            j += 1
+        if j == len(t):
+            return i + 1
+    return -1
+
+# Throttling Gateway
+def throttlingGateway(n, requestTime):
+    ans = 0
+    for i in range(n):
+        if i > 2 and (requestTime[i] == requestTime[i-3]):
+            ans += 1
+        elif i > 19 and (requestTime[i]-requestTime[i-20]) < 10:
+            ans += 1
+        elif i > 59 and (requestTime[i]-requestTime[i-60]) < 60:
+            ans += 1
+    return ans
+
+# Earliest Time to complete deliveries
+def earliestTime(numOfBuildings, buildingOpenTime, offloadTime):
+    buildingOpenTime.sort()
+    offloadTime.sort()
+    ans = 0
+    for i in range(0, len(offloadTime), 4):
+        time = buildingOpenTime[len(buildingOpenTime) - floor(i/4) - 1] + offloadTime[i + 3]
+        ans = max(ans, time)
+    return ans
+
+
+# Subtree of Another Tree
+def isSubtree(self, s, t):
+    def checkTree(root1, root2):
+        if not root1 or not root2:
+            return root1 == root2
+        if root1.val != root2.val:
+            return False
+        return checkTree(root1.left, root2.left) and checkTree(root1.right, root2.right)
+    def dfs(s, t):
+        if not s:
+            return False
+        if s.val == t.val and checkTree(s, t):
+            return True
+        else:
+            return dfs(s.left, t) or dfs(s.right, t)
+    return dfs(s, t)
+
+def uniqueDeviceNames(num, deviceNames):
+    deviceMap = {}
+    output = []
+    for i, device in enumerate(deviceNames):
+        newString = device
+        if not device in deviceMap:
+            deviceMap[device] = 1
+            output.append(device)
+        else:
+            newString += str(deviceMap[device])
+            output.append(newString)
+            deviceMap[device] += 1
+    return output 
+
+# Search Suggestions System
+class TrieNode:
+    def __init__(self):
+        self.children = dict()
+        self.words = list()
+        self.n = 0
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+    def add(self, word):
+        node = self.root
+        for c in word:
+            if c not in node.children:
+                node.children[c] = TrieNode()
+            node = node.children[c]
+            if node.n < 3:
+                node.words.append(word)
+                node.n += 1
+    def findWord(self, prefix):
+        node = self.root
+        for c in prefix:
+            if c not in node.children:
+                return ''
+            node = node.children[c]
+        return node.words
+def suggestedProducts(self, A, searchWord):
+    A.sort()
+    trie = Trie()
+    for word in A:
+        trie.add(word)
+    ans, cur = [], ''
+    for c in searchWord:
+        cur += c
+        ans.append(trie.findWord(cur))
+    return ans
